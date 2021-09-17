@@ -27,7 +27,7 @@ public class Equity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Equity that = (Equity) o;
-        return Objects.equals(czdx, that.czdx);
+        return Objects.equals(czdx, that.czdx) && Objects.equals(name, that.name);
     }
 
     @Override
