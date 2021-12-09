@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -16,27 +17,34 @@ public class SqlUtil {
     private static final String comma = ",";
     private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    public static <T> String batchInsertSql(List<T> list) {
+    public static <T> List<String> batchInsertSql(List<T> list){
+        return batchInsertSql(list,600);
+    }
+
+    public static <T> List<String> batchInsertSql(List<T> list,int pageSize) {
+        if(list == null || list.size() == 0){
+            return null;
+        }
+        List<String> result = new ArrayList<>();
         //首先拼装表字段
         Class<T> clazz = (Class<T>) list.get(0).getClass();
 
-        StringBuilder sb = new StringBuilder("INSERT INTO ");
-        sb.append(humpToLine(clazz.getSimpleName()));
-        sb.append(" (");
-        Field[] declaredFields = clazz.getDeclaredFields();
-        for (Field field : declaredFields) {
-            field.setAccessible(true);
-            sb.append(humpToLine(field.getName())).append(comma);
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append(") VALUE ");
         //然后拼接值
         int total = list.size();
         //每次只批量插入600条
         int fromIndex = 0;
-        int pageSize = 600;
         int toIndex;
         do {
+            StringBuilder sb = new StringBuilder("INSERT INTO ");
+            sb.append(humpToLine(clazz.getSimpleName()));
+            sb.append(" (");
+            Field[] declaredFields = clazz.getDeclaredFields();
+            for (Field field : declaredFields) {
+                field.setAccessible(true);
+                sb.append(humpToLine(field.getName())).append(comma);
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.append(") VALUE ");
             toIndex = fromIndex + pageSize;
             List<T> subList = list.subList(fromIndex, toIndex > total ? total : toIndex);
             for (T t : subList) {
@@ -66,9 +74,10 @@ public class SqlUtil {
             }
             sb.deleteCharAt(sb.length() - 1);
             fromIndex = toIndex;
+            result.add(sb.toString());
         } while (toIndex < total);
-        log.info("[生成sql语句]{}",sb);
-        return sb.toString();
+//        log.info("[生成sql语句]{}",sb);
+        return result;
     }
 
     private static Pattern humpPattern = Pattern.compile("[A-Z]");
