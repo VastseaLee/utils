@@ -29,7 +29,7 @@ public class SqlUtil {
         //首先拼装表字段
         Class<T> clazz = (Class<T>) list.get(0).getClass();
         StringBuilder basicSb = new StringBuilder("INSERT INTO ");
-        basicSb.append(humpToLine(clazz.getSimpleName()));
+        basicSb.append(tableName(clazz));
         basicSb.append(" (");
         Field[] declaredFields = clazz.getDeclaredFields();
         for (Field field : declaredFields) {
@@ -59,7 +59,9 @@ public class SqlUtil {
                             sb.append("'");
                             if (Date.class.isAssignableFrom(fieldClass)) {
                                 sb.append(sdf.format((Date) o));
-                            } else {
+                            } else if(String.class.isAssignableFrom(fieldClass)){
+                                sb.append(((String) o).replace("'","\\'"));
+                            }else {
                                 sb.append(o);
                             }
                             sb.append("',");
@@ -76,7 +78,6 @@ public class SqlUtil {
             fromIndex = toIndex;
             result.add(sb.toString());
         } while (toIndex < total);
-//        log.info("[生成sql语句]{}",sb);
         return result;
     }
 
@@ -107,4 +108,9 @@ public class SqlUtil {
         sb.append(humpToLine(clazz.getSimpleName()));
         return sb.toString();
     }
+
+    public static String tableName(Class clazz){
+        return humpToLine(clazz.getSimpleName());
+    }
+
 }
