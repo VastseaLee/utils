@@ -28,23 +28,23 @@ public class SqlUtil {
         List<String> result = new ArrayList<>();
         //首先拼装表字段
         Class<T> clazz = (Class<T>) list.get(0).getClass();
-
+        StringBuilder basicSb = new StringBuilder("INSERT INTO ");
+        basicSb.append(humpToLine(clazz.getSimpleName()));
+        basicSb.append(" (");
+        Field[] declaredFields = clazz.getDeclaredFields();
+        for (Field field : declaredFields) {
+            field.setAccessible(true);
+            basicSb.append(humpToLine(field.getName())).append(comma);
+        }
+        basicSb.deleteCharAt(basicSb.length() - 1);
+        basicSb.append(") VALUE ");
         //然后拼接值
         int total = list.size();
         //每次只批量插入600条
         int fromIndex = 0;
         int toIndex;
         do {
-            StringBuilder sb = new StringBuilder("INSERT INTO ");
-            sb.append(humpToLine(clazz.getSimpleName()));
-            sb.append(" (");
-            Field[] declaredFields = clazz.getDeclaredFields();
-            for (Field field : declaredFields) {
-                field.setAccessible(true);
-                sb.append(humpToLine(field.getName())).append(comma);
-            }
-            sb.deleteCharAt(sb.length() - 1);
-            sb.append(") VALUE ");
+            StringBuilder sb = new StringBuilder(basicSb);
             toIndex = fromIndex + pageSize;
             List<T> subList = list.subList(fromIndex, toIndex > total ? total : toIndex);
             for (T t : subList) {
